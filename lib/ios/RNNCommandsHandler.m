@@ -73,16 +73,26 @@ static NSString* const setDefaultOptions	= @"setDefaultOptions";
 	[_modalManager dismissAllModalsAnimated:NO completion:nil];
 	
 	UIViewController *vc = [_controllerFactory createLayout:layout[@"root"]];
-    vc.waitForRender = [vc.resolveOptionsWithDefault.animations.setRoot.waitForRender getWithDefaultValue:NO];
-    __weak UIViewController* weakVC = vc;
-    [vc setReactViewReadyCallback:^{
-        self->_mainWindow.rootViewController = weakVC;
-        [self->_eventEmitter sendOnNavigationCommandCompletion:setRoot commandId:commandId params:@{@"layout": layout}];
-        completion();
-    }];
-    
-	[vc render];
-}
+		vc.waitForRender = [vc.resolveOptionsWithDefault.animations.setRoot.waitForRender getWithDefaultValue:NO];
+	//    __weak UIViewController* weakVC = vc;
+		[vc setReactViewReadyCallback:^{
+	//        self->_mainWindow.rootViewController = weakVC;
+	//        [self->_eventEmitter sendOnNavigationCommandCompletion:setRoot commandId:commandId params:@{@"layout": layout}];
+			_mainWindow.rootViewController = vc;
+				   [vc.view setNeedsDisplay];
+			CATransition *transition = [[CATransition alloc] init];
+			transition.duration = 0.5;
+			transition.type = kCATransitionPush;
+			transition.subtype = kCATransitionFromRight;
+			[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
+			[_mainWindow.layer addAnimation:transition forKey:kCATransition];
+			[_eventEmitter sendOnNavigationCommandCompletion:setRoot commandId:commandId params:@{@"layout": layout}];
+			completion();
+		}];
+			
+
+		[vc render];
+	}
 
 - (void)mergeOptions:(NSString*)componentId options:(NSDictionary*)mergeOptions completion:(RNNTransitionCompletionBlock)completion {
 	[self assertReady];
