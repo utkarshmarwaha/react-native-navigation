@@ -53,7 +53,7 @@ static NSString* const setDefaultOptions	= @"setDefaultOptions";
 - (void)setRoot:(NSDictionary*)layout commandId:(NSString*)commandId completion:(RNNTransitionCompletionBlock)completion {
 	[self assertReady];
     RNNAssertMainQueue();
-	
+
 	if (@available(iOS 9, *)) {
 		if(_controllerFactory.defaultOptions.layout.direction.hasValue) {
 			if ([_controllerFactory.defaultOptions.layout.direction.get isEqualToString:@"rtl"]) {
@@ -69,54 +69,45 @@ static NSString* const setDefaultOptions	= @"setDefaultOptions";
 			}
 		}
 	}
-	
-	[_modalManager dismissAllModalsAnimated:NO completion:nil];
-	
-	UIViewController *vc = [_controllerFactory createLayout:layout[@"root"]];
-		vc.waitForRender = [vc.resolveOptionsWithDefault.animations.setRoot.waitForRender getWithDefaultValue:NO];
-	//    __weak UIViewController* weakVC = vc;
-		[vc setReactViewReadyCallback:^{
-	//        self->_mainWindow.rootViewController = weakVC;
-	//        [self->_eventEmitter sendOnNavigationCommandCompletion:setRoot commandId:commandId params:@{@"layout": layout}];
-			_mainWindow.rootViewController = vc;
-				   [vc.view setNeedsDisplay];
-			CATransition *transition = [[CATransition alloc] init];
-			transition.duration = 0.5;
-			transition.type = kCATransitionPush;
-			transition.subtype = kCATransitionFromRight;
-			[transition setTimingFunction:[CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut]];
-			[_mainWindow.layer addAnimation:transition forKey:kCATransition];
-			[_eventEmitter sendOnNavigationCommandCompletion:setRoot commandId:commandId params:@{@"layout": layout}];
-			completion();
-		}];
-			
 
-		[vc render];
-	}
+	[_modalManager dismissAllModalsAnimated:NO completion:nil];
+
+
+    UIViewController *vc = [_controllerFactory createLayout:layout[@"root"]];
+    vc.waitForRender = [vc.resolveOptionsWithDefault.animations.setRoot.waitForRender getWithDefaultValue:NO];
+    // __weak UIViewController* weakVC = vc;
+    [vc setReactViewReadyCallback:^{
+        [self->_mainWindow.rootViewController destroy];
+        // self->_mainWindow.rootViewController = weakVC;
+        // [self->_eventEmitter sendOnNavigationCommandCompletion:setRoot commandId:commandId params:@{@"layout": layout}];
+        completion();
+    }];
+
+    [vc render];
+}
 
 - (void)mergeOptions:(NSString*)componentId options:(NSDictionary*)mergeOptions completion:(RNNTransitionCompletionBlock)completion {
 	[self assertReady];
     RNNAssertMainQueue();
-	
+
 	UIViewController<RNNLayoutProtocol>* vc = [RNNLayoutManager findComponentForId:componentId];
 	RNNNavigationOptions* newOptions = [[RNNNavigationOptions alloc] initWithDict:mergeOptions];
 	if ([vc conformsToProtocol:@protocol(RNNLayoutProtocol)] || [vc isKindOfClass:[RNNComponentViewController class]]) {
 		[CATransaction begin];
 		[CATransaction setCompletionBlock:completion];
-		
+
 		[vc mergeOptions:newOptions];
-		
+
 		[CATransaction commit];
 	}
 }
 
 - (void)setDefaultOptions:(NSDictionary*)optionsDict completion:(RNNTransitionCompletionBlock)completion {
-	[self assertReady];
     RNNAssertMainQueue();
-    
+
 	RNNNavigationOptions* defaultOptions = [[RNNNavigationOptions alloc] initWithDict:optionsDict];
 	[_controllerFactory setDefaultOptions:defaultOptions];
-	
+
 	UIViewController *rootViewController = UIApplication.sharedApplication.delegate.window.rootViewController;
 	[RNNDefaultOptionsHelper recrusivelySetDefaultOptions:defaultOptions onRootViewController:rootViewController];
 
