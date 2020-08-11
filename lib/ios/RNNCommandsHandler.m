@@ -75,11 +75,11 @@ static NSString* const setDefaultOptions	= @"setDefaultOptions";
 
     UIViewController *vc = [_controllerFactory createLayout:layout[@"root"]];
     vc.waitForRender = [vc.resolveOptionsWithDefault.animations.setRoot.waitForRender getWithDefaultValue:NO];
-    // __weak UIViewController* weakVC = vc;
+    __weak UIViewController* weakVC = vc;
     [vc setReactViewReadyCallback:^{
         [self->_mainWindow.rootViewController destroy];
-        // self->_mainWindow.rootViewController = weakVC;
-        // [self->_eventEmitter sendOnNavigationCommandCompletion:setRoot commandId:commandId params:@{@"layout": layout}];
+        self->_mainWindow.rootViewController = weakVC;
+        [self->_eventEmitter sendOnNavigationCommandCompletion:setRoot commandId:commandId params:@{@"layout": layout}];
         completion();
     }];
 
